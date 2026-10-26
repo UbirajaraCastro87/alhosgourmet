@@ -1,39 +1,28 @@
 # Alhos Gourmet
 
-## Rodar localmente
+Esta versão roda como PHP, HTML, CSS e JavaScript no XAMPP. Não precisa de
+Node.js nem de `npm`.
 
-Requer Node.js 22 ou superior.
+## Executar no XAMPP
 
-```bash
-npm install
-npm run dev
-```
+1. Copie a pasta do projeto para `C:\xampp\htdocs\alhosgourmet`.
+2. Inicie **Apache** no painel do XAMPP.
+3. Abra `http://localhost/alhosgourmet/`.
+4. O painel fica em `http://localhost/alhosgourmet/admin.php`.
 
-Abra `http://localhost:3000`. O banco SQLite é criado automaticamente em
-`storage/alhosgourmet.sqlite`; os sabores e as fotos ficam salvos nesse arquivo
-no computador que executa o servidor. Faça cópias de segurança desse arquivo
-com o servidor parado.
+O SQLite cria/atualiza a tabela de produtos em
+`storage/alhosgourmet.sqlite`. As fotos enviadas são salvas em
+`uploads/products/`. Faça backup desses dois locais.
 
-No modo de desenvolvimento, a senha inicial do painel `/admin` é `admin123`.
-Para usar o modo de produção local, defina uma senha própria na variável de
-ambiente `ADMIN_PASSWORD` antes de iniciar o servidor.
+## Senha do painel
 
-## Hospedagem
+Na primeira execução local, a senha inicial é `admin123`. Antes de publicar o
+site ou permitir acesso externo, copie `config.example.php` para `config.php` e
+defina uma senha forte. O arquivo `config.php` não deve ser enviado ao Git.
 
-Em desenvolvimento local, o app usa SQLite em `storage/alhosgourmet.sqlite`.
-No Vercel, conecte serviços persistentes para salvar as alterações:
+## Publicação
 
-1. No projeto Vercel, abra **Storage → Create Database** e conecte um banco
-   PostgreSQL pelo Marketplace (por exemplo, Neon). Confirme que o projeto recebe
-   a variável `POSTGRES_URL` ou `DATABASE_URL`.
-2. Em **Storage → Create Storage**, crie um **Vercel Blob** público para as fotos.
-   A integração deve adicionar `BLOB_READ_WRITE_TOKEN` ao ambiente Production.
-3. Em **Settings → Environment Variables**, configure `ADMIN_PASSWORD` com uma
-   senha forte.
-4. Faça um novo deploy depois de conectar os serviços. As tabelas são criadas
-   automaticamente no primeiro acesso.
-
-Depois do deploy, abra `https://<seu-dominio-vercel>/admin`. O site usa
-PostgreSQL para os sabores e Blob para as fotos; o SQLite do repositório não é
-usado para persistência no Vercel. Consulte os limites e preços atuais dos
-serviços escolhidos antes de publicar.
+Esta versão exige hospedagem que execute PHP e ofereça SQLite ou MySQL.
+Hospedagem estática e Vercel não executam estes arquivos PHP. Para publicar no
+Vercel, será necessário criar uma versão compatível com esse serviço e conectar
+um banco e armazenamento de fotos externos.

@@ -1,10 +1,12 @@
-/node_modules
+/node_modules/
 /.next/
 /out/
 /storage/*.sqlite
 /storage/*.sqlite-shm
 /storage/*.sqlite-wal
+/config.php
+/uploads/products/*
+!/uploads/products/.gitkeep
 .DS_Store
 *.pem
-.env*.local
-.env
+node_modules
