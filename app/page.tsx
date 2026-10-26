@@ -5,7 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/context/ProductContext";
 
 export default function Home() {
-  const { products, isLoaded } = useProducts();
+  const { products, isLoaded, loadError } = useProducts();
   const [searchTerm, setSearchTerm] = useState("");
   const [priceFilter, setPriceFilter] = useState("todos");
 
@@ -37,6 +37,8 @@ export default function Home() {
         </div>
         {!isLoaded ? (
           <p className="text-center py-10">Carregando...</p>
+        ) : loadError ? (
+          <p role="alert" className="text-center py-10 text-red-600">{loadError}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filtered.map((prod) => <ProductCard key={prod.id} product={prod} />)}
