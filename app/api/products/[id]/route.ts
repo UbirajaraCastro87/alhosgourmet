@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { deleteProduct, updateProduct } from "@/lib/database";
+import { deleteProduct, getStorageMode, updateProduct } from "@/lib/database";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { Product } from "@/types";
 
@@ -20,7 +20,8 @@ function parseProduct(value: unknown, id: string): Product | null {
     !Number.isFinite(candidate.preco) ||
     candidate.preco < 0 ||
     typeof candidate.imagem !== "string" ||
-    candidate.imagem.length > 5 * 1024 * 1024
+    candidate.imagem.length > 5 * 1024 * 1024 ||
+    (candidate.imagem.startsWith("data:image/") && getStorageMode() === "postgres")
   ) {
     return null;
   }
@@ -62,13 +63,13 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   }
 
   try {
-    if (!updateProduct(product)) {
+    if (!(await updateProduct(product))) {
       return NextResponse.json({ error: "Sabor não encontrado." }, { status: 404 });
     }
     return NextResponse.json(product);
   } catch (error) {
-    console.error("Failed to update product in SQLite:", error);
-    return NextResponse.json({ error: "Não foi possível atualizar o sabor." }, { status: 500 });
+    console.error("Failed to update product:", error);
+    return NextResponse.json({ error: "Não foi possível atualizar o sabor. Confira a conexão com o banco de dados." }, { status: 500 });
   }
 }
 
@@ -79,12 +80,12 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
 
   const { id } = await context.params;
   try {
-    if (!deleteProduct(id)) {
+    if (!(await deleteProduct(id))) {
       return NextResponse.json({ error: "Sabor não encontrado." }, { status: 404 });
     }
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete product from SQLite:", error);
-    return NextResponse.json({ error: "Não foi possível excluir o sabor." }, { status: 500 });
+    console.error("Failed to delete product:", error);
+    return NextResponse.json({ error: "Não foi possível excluir o sabor. Confira a conexão com o banco de dados." }, { status: 500 });
   }
 }

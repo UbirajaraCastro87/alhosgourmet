@@ -5,6 +5,7 @@ import {
   importLegacyProducts,
   isLegacyImportPending,
   resetProducts,
+  getStorageMode,
 } from "@/lib/database";
 import { isAdminRequest } from "@/lib/admin-auth";
 import { Product } from "@/types";
@@ -32,6 +33,7 @@ function parseProduct(value: unknown): Omit<Product, "id"> | null {
   }
 
   const isOptimizedImage = candidate.imagem.startsWith("data:image/jpeg;base64,");
+  if (isOptimizedImage && getStorageMode() === "postgres") return null;
   if (!isOptimizedImage) {
     try {
       const imageUrl = new URL(candidate.imagem);
@@ -52,12 +54,16 @@ function parseProduct(value: unknown): Omit<Product, "id"> | null {
 export async function GET() {
   try {
     return NextResponse.json({
-      products: getProducts(),
-      legacyImportPending: isLegacyImportPending(),
+      products: await getProducts(),
+      legacyImportPending: await isLegacyImportPending(),
     });
   } catch (error) {
-    console.error("Failed to read products from SQLite:", error);
-    return NextResponse.json({ error: "Não foi possível carregar os sabores do banco local." }, { status: 500 });
+    console.error("Failed to read products:", error);
+    const message =
+      getStorageMode() === "unconfigured"
+        ? "Conecte um banco PostgreSQL ao projeto Vercel para carregar os sabores."
+        : "Não foi possível carregar os sabores. Confira a conexão com o banco de dados.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -79,10 +85,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    return NextResponse.json(addProduct(product), { status: 201 });
+    return NextResponse.json(await addProduct(product), { status: 201 });
   } catch (error) {
-    console.error("Failed to add product to SQLite:", error);
-    return NextResponse.json({ error: "Não foi possível salvar o sabor no banco local." }, { status: 500 });
+    console.error("Failed to add product:", error);
+    return NextResponse.json({ error: "Não foi possível salvar o sabor. Confira a conexão com o banco de dados." }, { status: 500 });
   }
 }
 
@@ -117,13 +123,13 @@ export async function PUT(request: Request) {
   }
 
   try {
-    if (!importLegacyProducts(products)) {
+    if (!(await importLegacyProducts(products))) {
       return NextResponse.json({ error: "A importação inicial já foi concluída." }, { status: 409 });
     }
-    return NextResponse.json({ products: getProducts() });
+    return NextResponse.json({ products: await getProducts() });
   } catch (error) {
-    console.error("Failed to import legacy products into SQLite:", error);
-    return NextResponse.json({ error: "Não foi possível importar os sabores antigos." }, { status: 500 });
+    console.error("Failed to import legacy products:", error);
+    return NextResponse.json({ error: "Não foi possível importar os sabores antigos. Confira a conexão com o banco de dados." }, { status: 500 });
   }
 }
 
@@ -133,10 +139,10 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    resetProducts();
-    return NextResponse.json({ products: getProducts() });
+    await resetProducts();
+    return NextResponse.json({ products: await getProducts() });
   } catch (error) {
-    console.error("Failed to reset SQLite products:", error);
-    return NextResponse.json({ error: "Não foi possível restaurar os sabores padrão." }, { status: 500 });
+    console.error("Failed to reset products:", error);
+    return NextResponse.json({ error: "Não foi possível restaurar os sabores padrão. Confira a conexão com o banco de dados." }, { status: 500 });
   }
 }
