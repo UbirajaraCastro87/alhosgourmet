@@ -26,16 +26,15 @@ $basePath = app_base_path();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f8f6f2">
     <title>Painel de Sabores | Alhos Gourmet</title>
-    <link rel="stylesheet" href="<?= admin_html_escape($basePath) ?>/assets/style.css">
+    <link rel="stylesheet" href="<?= admin_html_escape($basePath) ?>/assets/style.css?v=<?= filemtime(__DIR__ . '/assets/style.css') ?>">
     <script>window.APP_BASE_PATH = <?= json_encode($basePath, JSON_UNESCAPED_SLASHES) ?>;</script>
-    <script src="<?= admin_html_escape($basePath) ?>/assets/admin.js" defer></script>
+    <script src="<?= admin_html_escape($basePath) ?>/assets/admin.js?v=<?= filemtime(__DIR__ . '/assets/admin.js') ?>" defer></script>
 </head>
 <body class="admin-page">
     <header class="site-header">
         <div class="header-inner container">
             <a class="brand" href="<?= admin_html_escape($basePath) ?>/">
-                <span class="brand-mark" aria-hidden="true">🧄</span>
-                <span class="brand-copy"><strong>ALHOS GOURMET</strong><small>ARTESANAL &amp; NOBRE</small></span>
+                <img class="brand-logo" src="<?= admin_html_escape($basePath) ?>/uploads/img/logo/logo_site.jpeg" alt="Alhos Gourmet - praticidade que abraça o sabor" width="230" height="74">
             </a>
             <a class="admin-link" href="<?= admin_html_escape($basePath) ?>/">Voltar à loja</a>
         </div>
@@ -88,6 +87,33 @@ $basePath = app_base_path();
                 </div>
                 <button class="restore-button" id="restore-defaults" type="button">Restaurar sabores padrão</button>
                 <div class="admin-product-list" id="admin-product-list"></div>
+            </section>
+
+            <section class="customer-orders-panel panel-card" aria-labelledby="customer-orders-title">
+                <div class="customer-orders-heading">
+                    <div>
+                        <h2 id="customer-orders-title">Pedidos encaminhados pelo site</h2>
+                        <p class="field-help">Conta quando o pedido é encaminhado ao WhatsApp; o site não confirma se a mensagem foi enviada.</p>
+                    </div>
+                    <button class="button button-outline" id="refresh-customer-orders" type="button">Atualizar</button>
+                </div>
+                <p class="form-error" id="customer-orders-error" role="alert" hidden></p>
+                <div class="customer-orders-table-wrap">
+                    <table class="customer-orders-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Telefone</th>
+                                <th scope="col">Pedidos</th>
+                                <th scope="col">Último pedido</th>
+                                <th scope="col">Produtos</th>
+                                <th scope="col">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-orders-list">
+                            <tr><td colspan="5">Carregando pedidos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </section>
     </main>

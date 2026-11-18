@@ -95,7 +95,6 @@ function app_database(): PDO
             value TEXT NOT NULL
         )'
     );
-
     $columns = $database->query('PRAGMA table_info(products)')->fetchAll();
     $hasPosition = false;
     foreach ($columns as $column) {
@@ -118,6 +117,41 @@ function app_database(): PDO
     );
     $database->exec(
         "INSERT OR IGNORE INTO settings (key, value) VALUES ('legacy_import_pending', 'true')"
+    );
+
+    return $database;
+}
+
+function app_customer_orders_database(): PDO
+{
+    static $database;
+    if ($database instanceof PDO) {
+        return $database;
+    }
+
+    if (!extension_loaded('pdo_sqlite')) {
+        throw new RuntimeException('Ative a extensão pdo_sqlite no XAMPP.');
+    }
+
+    $databasePath = APP_ROOT . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'customer-orders.sqlite';
+    $storageDirectory = dirname($databasePath);
+    if (!is_dir($storageDirectory) && !mkdir($storageDirectory, 0775, true) && !is_dir($storageDirectory)) {
+        throw new RuntimeException('Não foi possível criar a pasta local do banco.');
+    }
+
+    $database = new PDO('sqlite:' . $databasePath, null, null, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+    $database->exec('PRAGMA busy_timeout = 5000');
+    $database->exec(
+        'CREATE TABLE IF NOT EXISTS customer_orders (
+            phone TEXT PRIMARY KEY,
+            orders_count INTEGER NOT NULL DEFAULT 0,
+            last_order_at TEXT NOT NULL,
+            last_order_summary TEXT NOT NULL,
+            last_order_total REAL NOT NULL
+        )'
     );
 
     return $database;

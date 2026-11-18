@@ -9,6 +9,8 @@
   const photoInput = document.getElementById('product-photo');
   const photoValue = document.getElementById('product-image');
   const photoUrl = document.getElementById('product-image-url');
+  const customerOrdersList = document.getElementById('customer-orders-list');
+  const customerOrdersError = document.getElementById('customer-orders-error');
   const preview = document.getElementById('image-preview');
   const previewImage = document.getElementById('image-preview-img');
   const saveButton = document.getElementById('save-product');
@@ -55,6 +57,51 @@
     products = result.products;
     renderProducts();
     return result;
+  }
+
+  function formatCustomerPhone(value) {
+    const digits = String(value).replace(/\D/g, '');
+    const nationalNumber = digits.startsWith('55') ? digits.slice(2) : digits;
+    if (nationalNumber.length === 11) {
+      return `+55 (${nationalNumber.slice(0, 2)}) ${nationalNumber.slice(2, 7)}-${nationalNumber.slice(7)}`;
+    }
+    if (nationalNumber.length === 10) {
+      return `+55 (${nationalNumber.slice(0, 2)}) ${nationalNumber.slice(2, 6)}-${nationalNumber.slice(6)}`;
+    }
+    return `+${digits}`;
+  }
+
+  function renderCustomerOrders(orders) {
+    if (orders.length === 0) {
+      customerOrdersList.innerHTML = '<tr><td colspan="5">Nenhum pedido encaminhado ainda.</td></tr>';
+      return;
+    }
+
+    customerOrdersList.innerHTML = orders.map((order) => {
+      const date = new Date(order.last_order_at);
+      const lastOrderAt = Number.isNaN(date.getTime())
+        ? 'Data indisponível'
+        : new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+      return `
+        <tr>
+          <td>${escapeHtml(formatCustomerPhone(order.phone))}</td>
+          <td>${escapeHtml(order.orders_count)}</td>
+          <td>${escapeHtml(lastOrderAt)}</td>
+          <td>${escapeHtml(order.last_order_summary)}</td>
+          <td>${escapeHtml(formatPrice(order.last_order_total))}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  async function loadCustomerOrders() {
+    hideError(customerOrdersError);
+    try {
+      const result = await request(`${apiUrl}?action=customer-orders`);
+      if (!Array.isArray(result.orders)) throw new Error('A lista de pedidos retornada pelo servidor é inválida.');
+      renderCustomerOrders(result.orders);
+    } catch (error) {
+      showError(error.message, customerOrdersError);
+    }
   }
 
   function renderProducts() {
@@ -181,10 +228,13 @@
       const state = await loadProducts();
       await migrateLegacyProducts(state, password);
       setAuthenticated(true);
+      await loadCustomerOrders();
     } catch (error) {
       showError(error.message);
     }
   });
+
+  document.getElementById('refresh-customer-orders').addEventListener('click', loadCustomerOrders);
 
   document.getElementById('logout-button').addEventListener('click', async () => {
     try {
@@ -329,7 +379,10 @@
     try {
       await loadProducts();
       const status = await request(`${apiUrl}?action=status`);
-      if (status.authenticated) setAuthenticated(true);
+      if (status.authenticated) {
+        setAuthenticated(true);
+        await loadCustomerOrders();
+      }
     } catch (error) {
       showError(error.message);
       document.querySelector('#login-form button').disabled = true;
